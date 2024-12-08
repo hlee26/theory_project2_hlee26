@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# import libraries
 from collections import deque
 import csv
 
@@ -29,6 +30,7 @@ class NTM:
 class sim:
     def __init__(self, ntm):
         self.ntm = ntm
+        # store bfs tree
         self.tree = []
     
     def go(self, input, max_d=50):
@@ -39,27 +41,32 @@ class sim:
         d = 0 # depth of tree
         visited = set() # keep track of visited configs
         total = 0 # count of total transitions
-        
+
+        # display machine details
         print(f"Machine Name: {self.ntm.name}")
         print(f"Initial String: {input}")
         print(f"Max Depth Allowed: {max_d}")
-        
+
+        # do bfs until queue is empty or max depth reached
         while q and d <= max_d:
             curr_lvl = []
             next = deque()
+            # process configs in curr queue
             while q:
                 left, state, right = q.popleft()
                 
                 left_str = left.replace('_', '')
                 right_str = ''.join(right).replace('_', '')
                 curr_config = (left_str, state, right_str)
-                
+
+                # skip if already visited
                 if curr_config in visited:
                     continue
                 visited.add(curr_config)
                 
                 curr_lvl.append((left_str, state, right_str))
-                
+
+                # check if machine is accepting
                 if state == self.ntm.acc:
                     self.tree.append(curr_lvl)
                     self.print_tree()
@@ -74,14 +81,16 @@ class sim:
                     continue
                 
                 curr = right[0] if right else '_'
-                
+
+                # process transitions
                 for trans_state, read, n_state, write, dir in self.ntm.transitions:
                     if trans_state == state and read == curr:
                         #print(f"Transition: ({state}, {curr}) -> ({n_state}, {write}, {dir})") #debug line
                         n_left, n_right = self.move_head(left, right, write, dir)
                         next.append((n_left, n_state, n_right))
                         total+=1
-                
+
+                # check if no valid transitions found
                 found_transition = any(trans_state == state and read == curr for trans_state, read, _, _, _ in self.ntm.transitions)
                 if not found_transition:
                     next.append((left, self.ntm.rej, right))
@@ -91,7 +100,8 @@ class sim:
             
             if not next:
                 break
-            
+
+            # increment bfs
             q = next
             d += 1
         if d>max_d:
@@ -138,6 +148,7 @@ def main():
     ntm = NTM.read_files(file_content)
     
     simulation = sim(ntm)
+    # here is where you have to type in desired input string
     simulation.go('aaa', max_d=50)
     
     
